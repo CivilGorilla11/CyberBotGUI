@@ -22,7 +22,7 @@ namespace CyberBotGUI.Core
         public ChatEngine()
         {
            
-            _sentiment = new SentimentDetector();
+            _sentiment = new SentimentDetector();   
 
             _keywordHandlers = new Dictionary<string, ResponseChat>
         {
@@ -166,7 +166,7 @@ namespace CyberBotGUI.Core
             => ResponseLibrary.GetRandom(ResponseLibrary.PasswordResponses);
 
         private string HandlePhishing(string i)
-            => ResponseLibrary.GetRandom(ResponseLibrary.PhishingResponses);
+            => ResponseLibrary.GetRandom(ResponseLibrary.PhishingResponses); 
 
         private string HandleScam(string i) =>
           ResponseLibrary.GetRandom(ResponseLibrary.ScamResponses);

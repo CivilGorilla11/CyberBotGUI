@@ -39,7 +39,7 @@ namespace CyberBotGUI.Core
         {
             if (!HasName()) return "Hello I am CyberBot. What is your name?";
             if (MessageCount == 1) return $"Welcome back, {UserName}! What cybersecurity related topic can I assist with today";
-            return $"Good to have you back in the chat, {UserName}!";
+            return $"Good to have you back in the chat, {UserName}!";  
         }
 
       

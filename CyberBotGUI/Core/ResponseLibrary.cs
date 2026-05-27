@@ -7,7 +7,7 @@ namespace CyberBotGUI.Core
     public static class ResponseLibrary
     {
         private static readonly ThreadLocal<Random> random =
-    new ThreadLocal<Random>(() => new Random());
+    new ThreadLocal<Random>(() => new Random()); 
 
         public static string GetRandom(List<string> responses)
         {

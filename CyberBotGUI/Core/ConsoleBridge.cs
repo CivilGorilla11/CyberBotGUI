@@ -23,7 +23,7 @@ namespace CyberBotGUI.Core
         }
 
 
-        public static void PlayGreeting()
+        public static void PlayGreeting() 
         {
             System.Threading.Thread voiceThread = new System.Threading.Thread(() =>
             {

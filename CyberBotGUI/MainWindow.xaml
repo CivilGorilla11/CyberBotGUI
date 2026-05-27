@@ -47,61 +47,172 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
     </Window.Resources>
-        
+
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="60"/> <!--Header section of app-->
-            <RowDefinition Height="*"/>  <!--Chat area for chat-->
-            <RowDefinition Height="70"/> <!--Input texr bar-->
-        </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="#161B22" BorderBrush="#30363D" BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
-                <Ellipse Width="12" Height="12" Fill="#00FF41" Margin="0,0,10,0"/>
-                <TextBlock Text="CyberBot" 
-                           Foreground="#00FF41"
-                           FontSize="16"
-                           FontFamily="Consolas"/>
-                <TextBlock Text="CyberSecurity Awareness Assistant"
-                           Foreground="#8B949E"
-                           FontSize="12"
-                           VerticalAlignment="Center"
-                           Margin="4,0,0,0"/>
-            </StackPanel>
-        </Border>
+        <!-- ============================= -->
+        <!-- ALIEN NEON LOCK BACKGROUND -->
+        <!-- ============================= -->
 
-        <ScrollViewer x:Name="ChatScroll" Grid.Row="1"
-                      VerticalScrollBarVisibility="Auto"
-                      Padding="12,8">
-            <StackPanel x:Name="ChatPanel"
-                        Orientation="Vertical"/>
-        </ScrollViewer>
+        <Grid IsHitTestVisible="False">
 
-        <Border Grid.Row="2" Background="#161B22"
-                BorderBrush="#30363D"
-                BorderThickness="0, 1, 0, 0"
-                Padding="12, 10">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+            <!-- Dark background -->
+            <Rectangle Fill="#050816"/>
 
-                <TextBox x:Name="InputBox" Grid.Column="0"
-                         Style="{StaticResource InputBox}"
-                         Height="42"
-                         Margin="0,0, 8, 0"
-                         KeyDown="InputBox_KeyDown"
-                         TextChanged="InputBox_TextChange"/>
+            <!-- Radial neon glow -->
+            <Ellipse Width="700"
+                     Height="700"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center"
+                     Opacity="0.18">
 
-                <Button x:Name="SendButton" Grid.Column="1"
-                        Style="{StaticResource SendButton}"
-                        Height="42" Width="80"
-                        Content="Send"
-                        Click="SendButton_Click"
-                        IsEnabled="False"/>
-            </Grid>
-        </Border>
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#00FFD5" Offset="0"/>
+                        <GradientStop Color="#050816" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
+            <!-- Alien lock hologram -->
+            <TextBlock Text="⌬"
+                       FontSize="320"
+                       FontWeight="Bold"
+                       Foreground="#00FFD5"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Opacity="0.08">
+
+                <TextBlock.Effect>
+                    <DropShadowEffect BlurRadius="50"
+                                      Color="#00FFD5"
+                                      ShadowDepth="0"
+                                      Opacity="1"/>
+                </TextBlock.Effect>
+
+            </TextBlock>
+
+            <!-- Animated neon line -->
+            <Canvas>
+
+                <Rectangle Width="2"
+                           Height="1200"
+                           Fill="#00FFD5"
+                           Opacity="0.12"
+                           Canvas.Left="250">
+
+                    <Rectangle.RenderTransform>
+                        <TranslateTransform x:Name="LineMove1"/>
+                    </Rectangle.RenderTransform>
+
+                    <Rectangle.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard RepeatBehavior="Forever"
+                                            AutoReverse="True">
+
+                                    <DoubleAnimation
+                                        Storyboard.TargetName="LineMove1"
+                                        Storyboard.TargetProperty="X"
+                                        From="-60"
+                                        To="60"
+                                        Duration="0:0:5"/>
+
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Rectangle.Triggers>
+
+                </Rectangle>
+
+            </Canvas>
+
+        </Grid>
+
+
+        <!-- ============================= -->
+        <!-- MAIN CHAT UI -->
+        <!-- ============================= -->
+
+        <Grid Panel.ZIndex="1">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+
+            <!-- CHAT AREA -->
+            <ScrollViewer x:Name="ChatScroll"
+                          Grid.Row="0"
+                          VerticalScrollBarVisibility="Hidden"
+                          Margin="20">
+
+                <StackPanel x:Name="ChatPanel"/>
+
+            </ScrollViewer>
+
+
+            <!-- INPUT AREA -->
+            <Border Grid.Row="1"
+                    Margin="20"
+                    CornerRadius="20"
+                    Background="#11000000"
+                    BorderBrush="#2200FFD5"
+                    BorderThickness="1"
+                    Padding="10">
+
+                <Grid>
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+
+                    <!-- MESSAGE INPUT -->
+                    <TextBox x:Name="InputBox"
+                             Grid.Column="0"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Foreground="White"
+                             FontSize="15"
+                             CaretBrush="#00FFD5"
+                             VerticalContentAlignment="Center"
+                             KeyDown="InputBox_KeyDown"
+                             TextChanged="InputBox_TextChange"/>
+
+
+                    <!-- SEND BUTTON -->
+                    <Button x:Name="SendButton" 
+                            Grid.Column="1"
+                            Width="60"
+                            Height="40"
+                            Margin="10,0,0,0"
+                            Content="➤"
+                            Click="SendButton_Click"
+                            Background="#001A1A"
+                            Foreground="#00FFD5"
+                            BorderBrush="#00FFD5"
+                            BorderThickness="1"
+                            FontSize="18"
+                            Cursor="Hand">
+
+                        <Button.Effect>
+                            <DropShadowEffect BlurRadius="20"
+                                              ShadowDepth="0"
+                                              Color="#00FFD5"
+                                              Opacity="0.7"/>
+                        </Button.Effect>
+
+                    </Button>
+
+                </Grid>
+
+            </Border>
+
+        </Grid>
 
     </Grid>
+
 </Window>

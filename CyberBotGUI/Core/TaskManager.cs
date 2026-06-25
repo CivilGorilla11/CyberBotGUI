@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using CyberBotGUI.Models;
 using CyberBotGUI.Data;
@@ -12,7 +11,7 @@ namespace CyberBotGUI.Core
         {
             var tasks = DatabaseService.GetAll();
 
-            if(tasks.Count == 0)
+            if (tasks.Count == 0)
             {
                 return "You have no tasks. Use 'add task' command followed by a title to create one.";
             }
@@ -29,16 +28,17 @@ namespace CyberBotGUI.Core
                 sb.AppendLine();
             }
 
-            ActivityLog.Add("Tasks Displayed", $"{ tasks.Count} tasks retrieved from database", "TASK");
+            ActivityLog.Add("Tasks Displayed", $"{tasks.Count} tasks retrieved from database", "TASK");
             return sb.ToString().TrimEnd();
         }
+
         public static string AddTask(string title, string description = "", DateTime? reminder = null)
         {
-            if(string.IsNullOrWhiteSpace(title))
+            if (string.IsNullOrWhiteSpace(title))
             {
-                return "Please provide a title for the task. Please provide a valid title.";
+                return "Please provide a valid title for the task.";
             }
-            if(string.IsNullOrWhiteSpace(description))
+            if (string.IsNullOrWhiteSpace(description))
             {
                 description = $"CyberSecurity task: {title}.";
             }
@@ -54,38 +54,36 @@ namespace CyberBotGUI.Core
             DatabaseService.AddTask(task);
             ActivityLog.Add("Task Added", $"Task '{title}' added to database", "TASK");
 
-            string rem = reminder.HasValue 
+            string rem = reminder.HasValue
                 ? $" Reminder set for {reminder.Value:dd MMM yyyy HH:mm}"
                 : "";
 
-            return $"Task added: {title}**\n{description}.{rem}";
+            return $"Task added: {title}\n{description}.{rem}";
         }
 
         public static string CompleteTask(int taskId)
         {
             DatabaseService.CompleteTask(taskId);
             ActivityLog.Add("Task Completed", $"Task ID {taskId} marked as complete", "TASK");
-            return $"Task {taskId} marked as complete. Well done for taking action on your cybersecurity journey!";
-
+            return $"Task {taskId} marked as complete.";
         }
 
         public static string DeleteTask(int taskId)
         {
             DatabaseService.DeleteTask(taskId);
             ActivityLog.Add("Task Deleted", $"Task ID {taskId} deleted from database", "TASK");
-            return $"Task {taskId} has been removed from the task list.";
+            return $"Task {taskId} has been removed.";
         }
 
         public static string QuickAddFromInput(string userInput)
         {
-            string title = NLPRouter.ExtractTaskTitle(userInput);
-            if(string.IsNullOrWhiteSpace(title))
-            { 
-                return "What would you like to name this task ? Say 'add task' followed by the task title to create a new task.";
+            var details = NLPRouter.ExtractTaskDetails(userInput);
+            if (string.IsNullOrWhiteSpace(details.Title))
+            {
+                return "Say 'add task' followed by the task title to create a new task.";
             }
-
-            return AddTask(title);
+            return AddTask(details.Title, "", details.Reminder);
         }
-}
+    }
 }
 

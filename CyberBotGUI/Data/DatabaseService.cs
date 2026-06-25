@@ -1,181 +1,147 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Data.SQLite;
+using MySql.Data.MySqlClient;
 using CyberBotGUI.Models;
-using System.Xml.Serialization;
-using System.Security.Cryptography.X509Certificates;
-using System.Xml.Linq;
-
 
 namespace CyberBotGUI.Data
 {
-    public  class DatabaseService
+    public static class DatabaseService
     {
-        private const string ConnStr = "Data Source=cyberbot.db;Version=3;";
-
+        private static string _connectionString =
+            "Server=localhost;Database=CyberBotDB;User ID=root;Password=Ipakzo2002*;";
+         
         public static void Initialize()
         {
-            using var conn = new SQLiteConnection(ConnStr);
-            conn.Open();
+            using var conn = new MySqlConnection(_connectionString); 
+            conn.Open();  
 
-            var cmd = new SQLiteCommand(conn)
-            {
-                CommandText = @"
-                CREATE TABLE IF NOT EXISTS Tasks (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Title TEXT NOT NULL,
-                    Description TEXT NOT NULL,
-                    IsComplete INTEGER NOT NULL DEFAULT 0,
-                    CreatedAt TEXT NOT NULL,
-                    ReminderTime TEXT
-                );
-                " 
-            };
+            var cmd = conn.CreateCommand();
+
+            cmd.CommandText = @"CREATE TABLE IF NOT EXISTS Tasks (
+                                    Id INT AUTO_INCREMENT PRIMARY KEY,
+                                    Title VARCHAR(255) NOT NULL,
+                                    Description TEXT,
+                                    ReminderTime DATETIME NULL,
+                                    CreatedAt DATETIME NOT NULL,
+                                    IsComplete BOOLEAN DEFAULT FALSE
+                                );";
             cmd.ExecuteNonQuery();
 
-            var count = new SQLiteCommand(
-                "SELECT COUNT(*) FROM Tasks;", conn).ExecuteScalar();
-
-            if(Convert.ToInt32(count) == 0)
-            {
-                SeedDefautTasks(conn);
-            }
+            cmd.CommandText = @"CREATE TABLE IF NOT EXISTS ActivityLog (
+                                    Id INT AUTO_INCREMENT PRIMARY KEY,
+                                    Action VARCHAR(255),
+                                    Details TEXT,
+                                    Category VARCHAR(50),
+                                    Timestamp DATETIME NOT NULL
+                                );";
+            cmd.ExecuteNonQuery();
         }
 
-        private static void SeedDefautTasks(SQLiteConnection conn)
-        {
-            var defaults = new[]
-            {
-                ("Enable 2FA",
-                "Set up two-facor authenication on all critical accounts including email, banking and social media.",
-                DateTime.Now.AddDays(1).ToString("o")),
-
-                ("Review Privcy Settings",
-                "Audit privacy settings on all social media platforms and disable data sharing where possible.",
-                (string)null),
-
-                ("Manage Passwords",
-                "Audit all saved passwords, remove duplicates and ensure each account has a unique strong password.",
-                DateTime.Now.AddDays(3).ToString("o")),
-
-                ("Update Antivirus",
-                "Ensure antivirus software is up to date and run a full system scan.",
-                (string)null),
-
-                ("Backup Data",
-                "Create a backup of all important data and store it in a secure location.",
-                DateTime.Now.AddDays(7).ToString("o")),
-
-            };
-
-            foreach (var (title, description, reminder) in defaults)
-            {
-                var cmd = new SQLiteCommand(conn)
-                {
-                    CommandText = @"
-               INSERT INTO Tasks
-                    (Title, Description, IsComplete, CreatedAt, ReminderTime)
-               VALUES 
-                    (@title,
-                    @description, 
-                    0,
-                    @createdAt,
-                    @reminder)"
-                };
-                cmd.Parameters.AddWithValue("@title", title);
-                cmd.Parameters.AddWithValue("@description", description);
-                cmd.Parameters.AddWithValue("@createdAt", DateTime.Now.ToString("o"));
-                cmd.Parameters.AddWithValue("@reminder", reminder ?? (object)DBNull.Value);
-                cmd.ExecuteNonQuery();
-            }
-        }
-
+        // ---------------- TASK METHODS ----------------
         public static List<CyberTask> GetAll()
         {
-            var list = new List<CyberTask>();
-            using var conn = new SQLiteConnection(ConnStr);
+            var tasks = new List<CyberTask>();
+            using var conn = new MySqlConnection(_connectionString);
             conn.Open();
-            var reader = new SQLiteCommand(
-                "SELECT * FROM Tasks ORDER BY CreatedAt DESC;"
-                , conn).ExecuteReader();
+
+            var cmd = new MySqlCommand("SELECT * FROM Tasks", conn);
+            using var reader = cmd.ExecuteReader();
 
             while (reader.Read())
             {
-                var task = new CyberTask
+                tasks.Add(new CyberTask
                 {
-                    Id = reader.GetInt32(0),
-                    Title = reader.GetString(1),
-                    Description = reader.GetString(2),
-                    IsComplete = reader.GetInt32(3) == 1,
-                    CreatedAt = DateTime.Parse(reader.GetString(4)),
-
-                };
-
-                if (!reader.IsDBNull(5))
-                {
-                    task.ReminderTime = DateTime.Parse(reader.GetString(5));
-                }
-                    list.Add(task);
-                }
-                return list;
-
+                    Id = reader.GetInt32("Id"),
+                    Title = reader.GetString("Title"),
+                    Description = reader.GetString("Description"),
+                    ReminderTime = reader.IsDBNull(reader.GetOrdinal("ReminderTime")) 
+                                   ? null 
+                                   : reader.GetDateTime("ReminderTime"),
+                    CreatedAt = reader.GetDateTime("CreatedAt"),
+                    IsComplete = reader.GetBoolean("IsComplete")
+                });
             }
-        
+            return tasks;
+        }
 
-            public static void AddTask(CyberTask task)
-            {
-                using var conn = new SQLiteConnection(ConnStr);
-                conn.Open();
-                var cmd = new SQLiteCommand(conn)
-
-                {
-                    CommandText = @"
-                    INSERT INTO Tasks
-                        (Title, Description, IsComplete, CreatedAt, ReminderTime)
-                    VALUES 
-                        (@title,
-                        @description, 
-                        0,
-                        @createdAt,
-                        @reminder);"
-
-
-                };
-                cmd.Parameters.AddWithValue("@title", task.Title);
-                cmd.Parameters.AddWithValue("@description", task.Description);
-                cmd.Parameters.AddWithValue("@createdAt", DateTime.Now.ToString("o"));
-                cmd.Parameters.AddWithValue("@reminder", task.ReminderTime?.ToString("o") ?? (object)DBNull.Value);
-                cmd.ExecuteNonQuery();
-            }
-
-        public static void CompleteTask(int id)
+        public static void AddTask(CyberTask task)
         {
-            using var conn = new SQLiteConnection(ConnStr);
+            using var conn = new MySqlConnection(_connectionString);
             conn.Open();
-            var cmd = new SQLiteCommand(conn)
-            {
-                CommandText = @"
-                UPDATE Tasks
-                SET IsComplete = 1
-                WHERE Id = @id;"
-            };
-            cmd.Parameters.AddWithValue("@id", id);
+
+            var cmd = new MySqlCommand(@"INSERT INTO Tasks 
+                (Title, Description, ReminderTime, CreatedAt, IsComplete) 
+                VALUES (@title, @desc, @rem, @created, @complete)", conn);
+
+            cmd.Parameters.AddWithValue("@title", task.Title);
+            cmd.Parameters.AddWithValue("@desc", task.Description);
+            cmd.Parameters.AddWithValue("@rem", task.ReminderTime.HasValue ? task.ReminderTime.Value : (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@created", task.CreatedAt);
+            cmd.Parameters.AddWithValue("@complete", task.IsComplete);
+
             cmd.ExecuteNonQuery();
         }
-            public static void DeleteTask(int id)
+
+        public static void CompleteTask(int taskId)
         {
-            using var conn = new SQLiteConnection(ConnStr); 
+            using var conn = new MySqlConnection(_connectionString);
             conn.Open();
-            var cmd = new SQLiteCommand(conn)
-            {
-                CommandText = @"
-                    DELETE FROM Tasks
-                    WHERE Id = @id;"
-            };
-            cmd.Parameters.AddWithValue("@id", id);
+
+            var cmd = new MySqlCommand("UPDATE Tasks SET IsComplete = TRUE WHERE Id = @id", conn);
+            cmd.Parameters.AddWithValue("@id", taskId);
             cmd.ExecuteNonQuery();
         }
+
+        public static void DeleteTask(int taskId)
+        {
+            using var conn = new MySqlConnection(_connectionString);
+            conn.Open();
+
+            var cmd = new MySqlCommand("DELETE FROM Tasks WHERE Id = @id", conn);
+            cmd.Parameters.AddWithValue("@id", taskId);
+            cmd.ExecuteNonQuery();
         }
+
+        // ---------------- ACTIVITY LOG METHODS ----------------
+        public static void AddLog(string action, string details, string category)
+        {
+            using var conn = new MySqlConnection(_connectionString);
+            conn.Open();
+
+            var cmd = new MySqlCommand(@"INSERT INTO ActivityLog 
+                (Action, Details, Category, Timestamp) 
+                VALUES (@action, @details, @category, @time)", conn);
+
+            cmd.Parameters.AddWithValue("@action", action);
+            cmd.Parameters.AddWithValue("@details", details);
+            cmd.Parameters.AddWithValue("@category", category);
+            cmd.Parameters.AddWithValue("@time", DateTime.Now);
+
+            cmd.ExecuteNonQuery();
+        }
+
+        public static List<LogEntry> GetLog()
+        {
+            var log = new List<LogEntry>();
+            using var conn = new MySqlConnection(_connectionString);
+            conn.Open();
+
+            var cmd = new MySqlCommand("SELECT * FROM ActivityLog ORDER BY Timestamp DESC", conn);
+            using var reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                log.Add(new LogEntry
+                {
+                    TimeStamp = reader.GetDateTime("Timestamp"),
+                    Action = reader.GetString("Action"),
+                    Description = reader.GetString("Details"),
+                    Category = reader.GetString("Category")
+                });
+            }
+            return log;
+        }
+    }
 }
+
 

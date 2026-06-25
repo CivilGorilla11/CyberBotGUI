@@ -21,7 +21,7 @@ namespace CyberBotGUI.Core
                 [Intent.ShowTasks] = new List<string>
                 {
                     "show my tasks", "list tasks", "what are my tasks", "display tasks",
-                    "pending tasks", "show pending tasks", "what tasks do I have", "see tasks"
+                    "pending tasks", "show pending tasks", "what tasks do I have", "see tasks" 
                 },
                 [Intent.AddTask] = new List<string>
                 {

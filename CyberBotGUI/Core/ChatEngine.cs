@@ -1,4 +1,5 @@
 ﻿using CyberBotGUI.Models;
+using CyberBotGUI.Data;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,12 +18,19 @@ namespace CyberBotGUI.Core
        
         private readonly SentimentDetector _sentiment;
 
+        private readonly QuizEngine _quiz = new QuizEngine();
+
         public List<ChatMessage> History { get; } = new List<ChatMessage>();
 
         public ChatEngine()
         {
            
-            _sentiment = new SentimentDetector();   
+            _sentiment = new SentimentDetector();
+
+            DatabaseService.Initialize();
+
+            ActivityLog.Add("Bot started", "CyberBotGui launched and database initialized", "SYSTEM");
+            ActivityLog.Add("Voice Greeting", "Welcome voice message played on startup", "VOICE");
 
             _keywordHandlers = new Dictionary<string, ResponseChat>
         {
@@ -48,15 +56,105 @@ namespace CyberBotGUI.Core
 
             History.Add(new ChatMessage(userInput, MessageSender.User));
 
+            ActivityLog.Add("User Message", $"Input recieved: \"{userInput.Substring(0, Math.Min(40, userInput.Length))}...\"","USER");
+
             string lower = userInput.ToLower();
             string response;
-            
+
+            if(_quiz.IsActive && _quiz.AwaitingAnswer)
+            {
+                response = _quiz.SubmitAnswer(userInput);
+                History.Add(new ChatMessage(response, MessageSender.Bot));
+                return response;
+            }
+
+            var intent = NLPRouter.Detect(userInput);
+            bool looksLikeCyberQuestion = lower.Contains("about") || lower. Contains("what is") || lower.Contains("tell me");
+
+            if (intent == Intent.Greeting && looksLikeCyberQuestion)
+            {
+                intent = Intent.CyberKeyword;
+            }
+            switch(intent) 
+            {
+                case Intent.NameIntro:
+                    string name = ExtractName(userInput);
+                    if(!string.IsNullOrEmpty(name))
+                    {
+                        MemoryStore.SetName(name);
+                        ActivityLog.Add("Name Captured", $"User name set to: {name}", "USER");
+                        response = $"Great to meet you, {name}! I am CyberBot your cybersecurity assistant";
+                        
+                        return Log(response);
+                    }
+
+                    break;
+
+                case Intent.Greeting:
+                    response = MemoryStore.GetGreeting();
+                    return Log(response);
+
+                case Intent.ShowTasks:
+                    response = TaskManager.ShowAllTasks();
+                    return Log(response);
+
+                    case Intent.AddTask:
+                    response = TaskManager.QuickAddFromInput(userInput);
+                    return Log(response);
+
+                case Intent.CompleteTask:
+                   int cId = NLPRouter.ExtractTaskId(userInput);
+                    response = cId > 0
+                        ? TaskManager.CompleteTask(cId)
+                        : "Which task number would you like to complete?" +
+                        " Say 'show tasks' to see all tasks.";
+                    return Log(response);
+
+                    case Intent.DeleteTask:
+                    int dId = NLPRouter.ExtractTaskId(userInput);
+                    response = dId > 0
+                        ? TaskManager.DeleteTask(dId)
+                        : "Which task number would you like to delete?" +
+                        " Say 'show tasks' to see all tasks.";
+                       return Log(response);
+
+                    case Intent.SetReminder:
+                    response = "To set a reminder say : add task [task title] at "+
+                        "and I will prompt you for a date and time for the reminder.";
+                    return Log(response);
+
+
+                case Intent.StartQuiz:
+                    _quiz.Start();
+                    response = "🧠 Starting the Cybersecurity Awareness Quiz!\n\n" +
+                                   "12 questions — multiple choice and true/false.\n" +
+                                   "Answer with A, B, C or D, or True/False.\n\n" +
+                                   "━━━━━━━━━━━━━━━━━━━━\n\n" +
+                                   _quiz.FormatQuestion();
+                    return Log(response);
+
+
+
+                case Intent.ShowLog:
+                    ActivityLog.Add("Log requested and viewed",
+                        "User requested to view the activity log", "SYSTEM");
+                    response = ActivityLog.FormatForChat();
+                    return Log(response);
+
+
+                case Intent.Exit:
+                    ActivityLog.Add("Session Ended!",
+                        "User has closed the chat session", "SYSTEM");
+                    response = "Goodbye! Remember to stay safe online!";
+                       return Log(response);
+            }
+
 
             try
             {
 
                 //User Name capturing 
-                if (lower.Contains("my name is") || lower.Contains("i am") || lower.Contains("i'm"))
+                if (lower.Contains("my name is"))
                 {
                    string name = ExtractName(userInput);
                     if (!string.IsNullOrEmpty(name))
@@ -96,8 +194,8 @@ namespace CyberBotGUI.Core
                         if (MemoryStore.MessageCount > 2)
                             response += BuildFollowUp();
 
-                        History.Add(new ChatMessage(response, MessageSender.Bot));
-                        return response; 
+                      ActivityLog.Add("Keyword Detected", $"Keyword: {entry.Key} detected in user input", "KEYWORD");
+                        return Log (response); 
                     }
                 }
                 //Short Input to ask for clarity 
@@ -105,20 +203,32 @@ namespace CyberBotGUI.Core
                 {
                     response = empathyPrefix + ResponseLibrary.GetRandom(ResponseLibrary.ClarificationResponses);
                     History.Add(new ChatMessage(response, MessageSender.Bot));
-                    return response;
+                    return Log(response);
                 }
-                response = empathyPrefix + ResponseLibrary.GetRandom(ResponseLibrary.FallbackResponses);
-                History.Add(new ChatMessage(response, MessageSender.Bot));
-                return response;
+                response = empathyPrefix + ResponseLibrary.GetRandom(ResponseLibrary.FallbackResponses) +
+                    "\n\n Tip: Try saying 'show tasks' or 'start quiz', " +
+                    "or ask me about cybersecurity topics like 'phishing', 'malware'.";
+
+
+                return Log(response);
 
 
             }
             catch (Exception ex)
+
             {
+                ActivityLog.Add("Error", $"Exception occurred: {ex.Message}", "ERROR");
                 response = $"Something went wrong: {ex.Message}. Please try again";
-                return response;
+                return Log(response);
 
             }
+        }
+
+        private string Log(string response)
+        {
+            History.Add(new ChatMessage(response, MessageSender.Bot));
+           
+            return response;
         }
         private string BuildFollowUp()
         {
@@ -132,7 +242,7 @@ namespace CyberBotGUI.Core
             try
             {
                 string lower = userInput.ToLowerInvariant();
-                string[] triggers = { "my name is", "i am", "i'm" };
+                string[] triggers = { "my name is" };
 
                 foreach (var trigger in triggers)
                 {
@@ -156,7 +266,7 @@ namespace CyberBotGUI.Core
                 Console.WriteLine(ex.Message);
             }
 
-            return string.Empty;
+            return "";
         }
 
         //Delegate handler methods

@@ -16,12 +16,7 @@ namespace CyberBotGUI
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class 
-        
-        
-        
-        
-        MainWindow : Window
+    public partial class MainWindow : Window
     {
         private readonly ChatEngine _engine = new ChatEngine();
         public MainWindow()
@@ -34,7 +29,14 @@ namespace CyberBotGUI
             ConsoleBridge.PlayGreeting();
 
             //Welcome Message on load
-            AddBotBubble("Hello! I am CyberBot - your cybersecurity awareness assistant.\n\nWhat is your name?");
+            AddBotBubble("🔐 Hello! I am CyberBot — your cybersecurity awareness assistant.\n\n" +
+                "Here is what I can help you with:\n" +
+                "• Ask about cybersecurity topics (phishing, malware, VPNs...)\n" +
+                "• Say 'show tasks' to manage your cybersecurity tasks\n" +
+                "• Say 'add task [name]' to create a new task\n" +
+                "• Say 'start quiz' to test your knowledge\n" +
+                "• Say 'show log' to see your activity history\n\n" +
+                "What is your name?");
         }
         private void InputBox_KeyDown(object sender, KeyEventArgs e)
         {
@@ -80,7 +82,7 @@ namespace CyberBotGUI
                 Padding = new Thickness(12, 8, 12, 8),
                 Margin = new Thickness(60, 4, 8, 4),
                 HorizontalAlignment = HorizontalAlignment.Right,
-                MaxWidth = 340,
+                MaxWidth = 380,
 
                 Effect = new DropShadowEffect
                 {
@@ -111,7 +113,7 @@ namespace CyberBotGUI
                 Padding = new Thickness(12, 8, 12, 8),
                 Margin = new Thickness(8, 4, 60, 4),
                 HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 340,
+                MaxWidth = 380,
                 BorderBrush = new SolidColorBrush(Color.FromRgb(0, 255, 200)),
                 BorderThickness = new Thickness(1),
 

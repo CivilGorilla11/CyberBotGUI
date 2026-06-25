@@ -165,7 +165,7 @@ namespace CyberBotGUI.Data
         }
             public static void DeleteTask(int id)
         {
-            using var conn = new SQLiteConnection(ConnStr);
+            using var conn = new SQLiteConnection(ConnStr); 
             conn.Open();
             var cmd = new SQLiteCommand(conn)
             {

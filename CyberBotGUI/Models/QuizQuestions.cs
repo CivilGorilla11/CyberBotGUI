@@ -15,7 +15,7 @@ namespace CyberBotGUI.Models
     public int Number { get; set; }
         public string Question { get; set; }
 
-        public QuestionType QuestionTyp {  get; set; }
+        public QuestionType QuestionTyp {  get; set; } 
 
         public List<string> Options { get; set; }
         

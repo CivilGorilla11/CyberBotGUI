@@ -194,7 +194,7 @@ namespace CyberBotGUI.Core
                         if (MemoryStore.MessageCount > 2)
                             response += BuildFollowUp();
 
-                      ActivityLog.Add("Keyword Detected", $"Keyword: {entry.Key} detected in user input", "KEYWORD");
+                      ActivityLog.Add("Keyword Detected", $"Keyword: {entry.Key} detected in user input", "KEYWORD"); 
                         return Log (response); 
                     }
                 }

@@ -7,7 +7,7 @@ namespace CyberBotGUI.Core
 {
     public static class ActivityLog
     {
-        private static readonly List<LogEntry> _entries = new List<LogEntry>();
+        private static readonly List<LogEntry> _entries = new List<LogEntry>(); 
 
         static ActivityLog() 
         {

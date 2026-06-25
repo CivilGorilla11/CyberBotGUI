@@ -13,7 +13,7 @@ namespace CyberBotGUI.Models
 
         public bool IsComplete{ get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } 
         public DateTime ? ReminderTime
         {
             get; set;

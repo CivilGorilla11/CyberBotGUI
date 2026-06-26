@@ -1,0 +1,50 @@
+# CyberBotGUI 🛡️💬
+
+A **Cybersecurity Awareness Chatbot** built with **C# (WPF)** and a **MySQL backend**.  
+It helps users learn about cybersecurity, manage personal security tasks, and test their knowledge through interactive quizzes — all while logging activity persistently in a database.
+
+---
+
+## 📌 Features
+- **Natural Language Processing (NLP)**: Detects user intent (e.g., add task, start quiz, show log).
+- **Task Management**: Add, complete, delete, and list cybersecurity-related tasks.
+- **Persistent Logging**: Every action is stored in MySQL for audit and review.
+- **Quiz Engine**: Interactive multiple-choice and true/false cybersecurity quiz.
+- **Sentiment Detection**: Responds empathetically to user tone (positive, confused, urgent).
+- **Activity Log**: Unified view of all chatbot actions, user inputs, and system events.
+
+---
+
+## 🏗️ Architecture Overview
+| Component | Role |
+|-----------|------|
+| **ChatEngine** | Central orchestrator. Routes user input through NLP, calls TaskManager or QuizEngine, and logs actions. |
+| **NLPRouter** | Detects intent and extracts task details (title, reminder time, task ID). |
+| **TaskManager** | Handles CRUD operations for tasks and integrates with DatabaseService. |
+| **DatabaseService** | Connects to MySQL, creates tables, and persists tasks and logs. |
+| **QuizEngine** | Runs cybersecurity quizzes, checks answers, and logs results. |
+| **ActivityLog** | Provides a unified log view for recent actions. |
+
+---
+
+## 🗄️ Database Schema
+```sql
+CREATE DATABASE IF NOT EXISTS CyberBotDB;
+USE CyberBotDB;
+
+CREATE TABLE IF NOT EXISTS Tasks (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Title VARCHAR(255) NOT NULL,
+    Description TEXT,
+    ReminderTime DATETIME NULL,
+    CreatedAt DATETIME NOT NULL,
+    IsComplete BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS ActivityLog (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Action VARCHAR(255) NOT NULL,
+    Details TEXT,
+    Category VARCHAR(50),
+    Timestamp DATETIME NOT NULL
+);
